@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DOMUSVIA — Gestión de Siniestros</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Mono:wght@400;500&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --brand: #1a3a5c;
+  --brand-mid: #2d5f96;
+  --brand-light: #e8f0f8;
+  --bg: #ffffff;
+  --bg2: #f7f8fa;
+  --bg3: #eef0f3;
+  --border: rgba(0,0,0,0.1);
+  --border2: rgba(0,0,0,0.18);
+  --text: #1a1a1a;
+  --text2: #4a5568;
+  --text3: #9aa5b4;
+  --success-bg: #ecfdf5;
+  --success-text: #065f46;
+  --warn-bg: #fffbeb;
+  --warn-text: #92400e;
+  --info-bg: #eff6ff;
+  --info-text: #1e40af;
+  --danger-bg: #fef2f2;
+  --danger-text: #991b1b;
+  --r: 8px;
+  --rl: 12px;
+  --font: 'DM Sans', system-ui, sans-serif;
+  --mono: 'DM Mono', monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1b1e;
+    --bg2: #25262b;
+    --bg3: #2c2d32;
+    --border: rgba(255,255,255,0.1);
+    --border2: rgba(255,255,255,0.18);
+    --text: #e8e9ec;
+    --text2: #9aa5b4;
+    --text3: #5c6878;
+    --success-bg: #052e1c;
+    --success-text: #6ee7b7;
+    --warn-bg: #2d1f02;
+    --warn-text: #fcd34d;
+    --info-bg: #0d1f3c;
+    --info-text: #93c5fd;
+    --danger-bg: #2d0a0a;
+    --danger-text: #fca5a5;
+  }
+}
+
+html, body { height: 100%; font-family: var(--font); background: var(--bg3); color: var(--text); }
+
+#app {
+  max-width: 860px;
+  margin: 20px auto;
+  background: var(--bg);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 40px);
+  min-height: 600px;
+}
+
+/* Header */
+#header {
+  background: var(--brand);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+#header-left { display: flex; align-items: center; gap: 12px; }
+#logo {
+  width: 36px; height: 36px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; color: white; font-weight: 500;
+}
+#header h1 { font-size: 14px; font-weight: 500; color: white; }
+#header p { font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 1px; }
+#conn-status { display: flex; align-items: center; gap: 6px; font-size: 11px; color: rgba(255,255,255,0.7); }
+.conn-dot { width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; transition: background 0.3s; flex-shrink: 0; }
+.conn-dot.ok { background: #4ade80; box-shadow: 0 0 0 2px rgba(74,222,128,0.25); }
+.conn-dot.err { background: #f87171; }
+
+/* Tabs */
+#tabs {
+  display: flex;
+  border-bottom: 0.5px solid var(--border);
+  background: var(--bg2);
+  flex-shrink: 0;
+}
+.tab {
+  padding: 10px 18px;
+  font-size: 12px; font-weight: 500;
+  color: var(--text2);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--brand); border-bottom-color: var(--brand); background: var(--bg); }
+
+/* Panels */
+#content { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+.panel { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+.panel.active { display: flex; }
+
+/* Chat */
+#chat-panel {
+  flex: 1; overflow-y: auto;
+  padding: 16px;
+  display: flex; flex-direction: column; gap: 12px;
+  scroll-behavior: smooth;
+}
+
+.msg { display: flex; gap: 9px; max-width: 92%; }
+.msg.user { flex-direction: row-reverse; align-self: flex-end; }
+.msg.bot { align-self: flex-start; }
+
+.msg-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 500;
+}
+.bot .msg-avatar { background: var(--brand); color: white; }
+.user .msg-avatar { background: var(--bg3); color: var(--text2); }
+
+.msg-bubble {
+  padding: 10px 13px;
+  border-radius: 12px;
+  font-size: 13px; line-height: 1.65;
+}
+.bot .msg-bubble {
+  background: var(--bg2);
+  border: 0.5px solid var(--border);
+  border-top-left-radius: 3px;
+  color: var(--text);
+}
+.user .msg-bubble {
+  background: var(--brand);
+  color: white;
+  border-top-right-radius: 3px;
+}
+
+.opt-btn {
+  display: inline-block;
+  margin: 3px 4px 3px 0;
+  padding: 5px 12px;
+  border: 0.5px solid var(--border2);
+  border-radius: 20px;
+  font-size: 12px; cursor: pointer;
+  background: var(--bg); color: var(--text);
+  transition: all 0.15s;
+  font-family: var(--font);
+}
+.opt-btn:hover { background: var(--brand-light); border-color: var(--brand-mid); color: var(--brand); }
+
+.alert-box { background: var(--warn-bg); color: var(--warn-text); padding: 8px 11px; border-radius: var(--r); font-size: 12px; margin-bottom: 8px; }
+.success-box { background: var(--success-bg); color: var(--success-text); padding: 8px 11px; border-radius: var(--r); font-size: 12px; margin-bottom: 8px; }
+.info-box { background: var(--info-bg); color: var(--info-text); padding: 8px 11px; border-radius: var(--r); font-size: 12px; margin-bottom: 8px; }
+.hint-box { background: var(--brand-light); color: var(--brand-mid); padding: 8px 11px; border-radius: var(--r); font-size: 12px; margin-top: 8px; border-left: 2px solid var(--brand-mid); }
+
+.typing { display: flex; gap: 4px; align-items: center; padding: 10px 13px; }
+.dot { width: 6px; height: 6px; background: var(--text3); border-radius: 50%; animation: bounce 1.2s infinite; }
+.dot:nth-child(2) { animation-delay: .2s; }
+.dot:nth-child(3) { animation-delay: .4s; }
+@keyframes bounce { 0%,60%,100%{ transform:translateY(0); } 30%{ transform:translateY(-5px); } }
+
+/* Sync bar */
+.sync-bar {
+  display: none;
+  align-items: center; gap: 7px;
+  padding: 6px 16px;
+  background: var(--bg2);
+  border-bottom: 0.5px solid var(--border);
+  font-size: 11px; color: var(--text3);
+  flex-shrink: 0;
+}
+.spinning { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Input area */
+#input-area {
+  padding: 12px 16px;
+  border-top: 0.5px solid var(--border);
+  display: flex; gap: 9px; align-items: flex-end;
+  flex-shrink: 0; background: var(--bg);
+}
+#user-input {
+  flex: 1; resize: none;
+  border: 0.5px solid var(--border2);
+  border-radius: var(--r);
+  padding: 9px 12px;
+  font-family: var(--font); font-size: 13px;
+  color: var(--text); background: var(--bg);
+  min-height: 38px; max-height: 100px;
+  outline: none; transition: border-color 0.15s;
+}
+#user-input:focus { border-color: var(--brand-mid); }
+#user-input::placeholder { color: var(--text3); }
+#send-btn {
+  width: 38px; height: 38px;
+  background: var(--brand); border: none; border-radius: 9px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: opacity 0.15s;
+}
+#send-btn:hover { opacity: 0.85; }
+#send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+#send-btn svg { width: 16px; height: 16px; fill: white; }
+
+/* Data panel */
+#data-inner {
+  flex: 1; overflow-y: auto;
+  padding: 16px;
+  display: flex; flex-direction: column; gap: 11px;
+}
+.stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 9px; }
+.stat-card { background: var(--bg2); border-radius: var(--r); padding: 11px 13px; }
+.stat-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
+.stat-num { font-size: 22px; font-weight: 500; color: var(--text); margin-top: 3px; }
+.section-hdr { display: flex; align-items: center; justify-content: space-between; margin-top: 2px; }
+.section-title { font-size: 12px; font-weight: 500; color: var(--text2); }
+.btn-small {
+  display: flex; align-items: center; gap: 5px;
+  padding: 6px 12px;
+  border: 0.5px solid var(--border2); border-radius: var(--r);
+  background: var(--bg); color: var(--text2);
+  font-family: var(--font); font-size: 11px; cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-small:hover { background: var(--bg2); color: var(--text); }
+.btns-row { display: flex; gap: 7px; }
+
+.claim-card {
+  border: 0.5px solid var(--border);
+  border-radius: var(--rl);
+  padding: 12px 14px;
+  background: var(--bg);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.claim-card:hover { border-color: var(--border2); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.claim-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.claim-ref { font-size: 11px; font-family: var(--mono); color: var(--brand-mid); font-weight: 500; }
+.badge { font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
+.badge-pend { background: var(--warn-bg); color: var(--warn-text); }
+.badge-done { background: var(--success-bg); color: var(--success-text); }
+.claim-addr { font-size: 13px; font-weight: 500; margin: 5px 0 3px; color: var(--text); }
+.claim-meta { font-size: 11px; color: var(--text2); display: flex; gap: 10px; flex-wrap: wrap; }
+.claim-foot { font-size: 11px; color: var(--text3); margin-top: 5px; }
+.empty { text-align: center; padding: 40px 20px; color: var(--text3); font-size: 13px; line-height: 1.8; }
+
+/* Config panel */
+#config-inner { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 18px; }
+.config-label { font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--text); }
+.config-desc { font-size: 12px; color: var(--text2); margin-bottom: 9px; line-height: 1.6; }
+#script-url-input {
+  width: 100%; height: 72px;
+  border: 0.5px solid var(--border2); border-radius: var(--r);
+  padding: 9px 11px;
+  font-family: var(--mono); font-size: 11px;
+  color: var(--text); background: var(--bg);
+  resize: none; outline: none; line-height: 1.5;
+}
+#script-url-input:focus { border-color: var(--brand-mid); }
+.btn-primary {
+  margin-top: 9px; padding: 9px 18px;
+  background: var(--brand); color: white;
+  border: none; border-radius: var(--r);
+  font-family: var(--font); font-size: 13px;
+  cursor: pointer; transition: opacity 0.15s;
+}
+.btn-primary:hover { opacity: 0.88; }
+#config-status { font-size: 12px; color: var(--text2); min-height: 18px; }
+.config-divider { border: none; border-top: 0.5px solid var(--border); }
+.config-steps { font-size: 12px; color: var(--text2); line-height: 2; }
+
+/* User badge */
+#user-panel {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 0.5px solid var(--border);
+  background: var(--bg2); flex-shrink: 0;
+}
+#user-panel label { font-size: 11px; color: var(--text3); }
+#user-name-input {
+  border: 0.5px solid var(--border2); border-radius: var(--r);
+  padding: 4px 9px; font-family: var(--font); font-size: 12px;
+  color: var(--text); background: var(--bg); outline: none; width: 160px;
+}
+#user-name-input:focus { border-color: var(--brand-mid); }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Header -->
+  <div id="header">
+    <div id="header-left">
+      <div id="logo">D</div>
+      <div>
+        <h1>DOMUSVIA — Gestión de Siniestros</h1>
+        <p>Base de datos compartida · Google Sheets</p>
+      </div>
+    </div>
+    <div id="conn-status">
+      <div class="conn-dot" id="conn-dot"></div>
+      <span id="conn-label">Conectando...</span>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div id="tabs">
+    <div class="tab active" onclick="switchTab('chat')">Asistente</div>
+    <div class="tab" onclick="switchTab('data')">Siniestros</div>
+    <div class="tab" onclick="switchTab('config')">Configuración</div>
+  </div>
+
+  <!-- Content -->
+  <div id="content">
+
+    <!-- Chat panel -->
+    <div id="chat-wrap" class="panel active">
+      <div id="user-panel">
+        <label>Usuario:</label>
+        <input type="text" id="user-name-input" placeholder="Tu nombre" oninput="saveUserName(this.value)">
+      </div>
+      <div class="sync-bar" id="sync-bar">
+        <svg id="sync-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M23 4v6h-6M1 20v-6h6"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+        <span>Sincronizando con Google Sheets...</span>
+      </div>
+      <div id="chat-panel"></div>
+      <div id="input-area">
+        <textarea id="user-input" placeholder="Escribe aquí tu respuesta..." rows="1"
+          onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+        <button id="send-btn" onclick="sendMessage()">
+          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Data panel -->
+    <div id="data-wrap" class="panel">
+      <div id="data-inner"><div class="empty">Cargando datos...</div></div>
+    </div>
+
+    <!-- Config panel -->
+    <div id="config-wrap" class="panel">
+      <div id="config-inner">
+        <div>
+          <div class="config-label">URL del Google Apps Script</div>
+          <div class="config-desc">Pega aquí la URL de tu implementación de Google Apps Script para conectar con la hoja de cálculo compartida.</div>
+          <textarea id="script-url-input" placeholder="https://script.google.com/macros/s/..."></textarea>
+          <button class="btn-primary" onclick="saveScriptUrl()">Guardar y conectar</button>
+        </div>
+        <div id="config-status"></div>
+        <hr class="config-divider">
+        <div>
+          <div class="config-label">API Key de Anthropic</div>
+          <div class="config-desc">Necesaria para que funcione el asistente de IA. Se guarda solo en tu navegador y nunca se comparte. Todos los usuarios deben introducir la misma clave.</div>
+          <input type="password" id="api-key-input" placeholder="sk-ant-..." style="width:100%;border:0.5px solid var(--border2);border-radius:var(--r);padding:9px 11px;font-family:var(--mono);font-size:12px;color:var(--text);background:var(--bg);outline:none;">
+          <button class="btn-primary" onclick="saveApiKey()">Guardar clave</button>
+          <div id="api-key-status" style="font-size:12px;color:var(--text2);margin-top:8px;min-height:18px;"></div>
+        </div>
+        <hr class="config-divider">
+        <div>
+          <div class="config-label">Instrucciones de uso</div>
+          <div class="config-steps">
+            1. Abre este archivo HTML en tu navegador<br>
+            2. Ve a Configuración y pega la URL del Apps Script<br>
+            3. Haz clic en "Guardar y conectar"<br>
+            4. Comparte este mismo archivo HTML con el resto del equipo<br>
+            5. Cada usuario verá y trabajará sobre los mismos datos en Google Sheets
+          </div>
+        </div>
+        <hr class="config-divider">
+        <div>
+          <div class="config-label">Acerca de</div>
+          <div class="config-steps">
+            DOMUSVIA — Sistema de gestión de siniestros<br>
+            Versión 1.0 · Base de datos: Google Sheets<br>
+            IA: Claude (Anthropic)
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── Constants ─────────────────────────────────────────
+const SCRIPT_URL_KEY = 'domusvia_script_url_v1';
+const WEEKLY_KEY     = 'domusvia_weekly_v1';
+const USERNAME_KEY   = 'domusvia_username_v1';
+const API_KEY_KEY    = 'domusvia_api_key_v1';
+
+// ── State ─────────────────────────────────────────────
+let scriptUrl = '';
+let apiKey = '';
+let claims = [];
+let conversationHistory = [];
+let isTyping = false;
+let currentClaim = null;
+let userName = '';
+
+// ── Local storage helpers ─────────────────────────────
+const ls = {
+  get: k => { try { return localStorage.getItem(k) || ''; } catch(e) { return ''; } },
+  set: (k,v) => { try { localStorage.setItem(k, v); } catch(e) {} }
+};
+
+function saveUserName(v) {
+  userName = v.trim();
+  ls.set(USERNAME_KEY, userName);
+}
+
+function checkWeekly() {
+  const last = ls.get(WEEKLY_KEY);
+  if (!last) return true;
+  return Date.now() - parseInt(last) > 7 * 24 * 3600 * 1000;
+}
+function markWeekly() { ls.set(WEEKLY_KEY, Date.now().toString()); }
+
+// ── Date helpers ──────────────────────────────────────
+function todayStr() {
+  const d = new Date();
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+}
+
+function normalizeDate(s) {
+  if (!s) return '';
+  const m = s.match(/(\d{1,2})[-\/\.](\d{1,2})[-\/\.](\d{2,4})/);
+  if (!m) return s;
+  const y = m[3].length === 2 ? '20' + m[3] : m[3];
+  return `${m[1].padStart(2,'0')}/${m[2].padStart(2,'0')}/${y}`;
+}
+
+function daysSince(dateStr) {
+  if (!dateStr) return 0;
+  const p = dateStr.split('/');
+  if (p.length < 3) return 0;
+  const d = new Date(parseInt(p[2]), parseInt(p[1])-1, parseInt(p[0]));
+  return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
+}
+
+// ── Fuzzy helpers ─────────────────────────────────────
+function levenshtein(a, b) {
+  a = (a||'').toLowerCase(); b = (b||'').toLowerCase();
+  const m = a.length, n = b.length;
+  const dp = Array.from({length:m+1}, (_,i) => Array.from({length:n+1}, (_,j) => i===0?j:j===0?i:0));
+  for (let i=1;i<=m;i++) for (let j=1;j<=n;j++)
+    dp[i][j] = a[i-1]===b[j-1] ? dp[i-1][j-1] : 1+Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+  return dp[m][n];
+}
+
+function normalizeAddr(s) {
+  return (s||'').toLowerCase()
+    .replace(/carrer|calle|avinguda|avenida|passeig|paseo|pla[çc]a|plaza/g,'')
+    .replace(/\bde \b|\bdel \b|\bla \b|\bel \b|\bd'/g,'')
+    .replace(/[àáä]/g,'a').replace(/[èéë]/g,'e').replace(/[ìíï]/g,'i')
+    .replace(/[òóö]/g,'o').replace(/[ùúü]/g,'u').replace(/[ç]/g,'c')
+    .replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+}
+
+// ── Google Sheets (JSONP) ─────────────────────────────
+function jsonpRequest(url) {
+  return new Promise((resolve, reject) => {
+    const cb = 'cb_' + Date.now() + '_' + Math.floor(Math.random()*9999);
+    window[cb] = data => {
+      delete window[cb];
+      document.head.removeChild(script);
+      resolve(data);
+    };
+    const script = document.createElement('script');
+    const sep = url.includes('?') ? '&' : '?';
+    script.src = url + sep + 'callback=' + cb + '&t=' + Date.now();
+    script.onerror = () => { delete window[cb]; reject(new Error('JSONP error')); };
+    document.head.appendChild(script);
+    setTimeout(() => { if(window[cb]) { delete window[cb]; reject(new Error('Timeout')); } }, 12000);
+  });
+}
+
+async function sheetsRequest(params) {
+  if (!scriptUrl) return null;
+  try {
+    const qs = Object.entries(params).map(([k,v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+    const data = await jsonpRequest(scriptUrl + '?' + qs);
+    return data;
+  } catch(e) {
+    console.error('Sheets error:', e);
+    return null;
+  }
+}
+
+async function sheetsPing() {
+  const r = await sheetsRequest({action:'ping'});
+  return r && r.ok;
+}
+
+async function sheetsRead() {
+  const r = await sheetsRequest({action:'read'});
+  return (r && r.ok) ? r.data : null;
+}
+
+async function sheetsAppend(row) {
+  const r = await sheetsRequest({action:'append', row: JSON.stringify(row)});
+  return r && r.ok;
+}
+
+// ── Parse sheet rows ──────────────────────────────────
+function parseSheetData(rows) {
+  if (!rows || rows.length < 2) return [];
+  const byId = {};
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r[0] && !r[1]) continue;
+    const id = String(r[12] || (r[1] + '_' + r[0])).trim();
+    if (!byId[id]) {
+      byId[id] = { id, reference: String(r[5]||''), insurer: String(r[9]||''), type: String(r[10]||''), entries: [] };
+    }
+    byId[id].entries.push({
+      date: String(r[0]||''), address: String(r[1]||''), department: String(r[2]||''),
+      damage: String(r[3]||''), images: String(r[4]||''), action: String(r[6]||''),
+      status: String(r[7]||'PENDIENTE'), victim: String(r[11]||''),
+      usuario: String(r[13]||'')
+    });
+  }
+  return Object.values(byId);
+}
+
+// ── Phase detection ───────────────────────────────────
+function detectPhase(claim) {
+  if (!claim || !claim.entries) return 1;
+  const txt = claim.entries.map(e=>(e.action||'').toLowerCase()).join(' ');
+  if (/indemnizaci[oó]n|reparador enviado|abono|pago|subsanado|resuelto/.test(txt)) return 5;
+  if (/factura|justificante|acreditaci[oó]n|documentaci[oó]n enviada|enviada a aseguradora/.test(txt)) return 4;
+  if (/empresa|presupuesto|reparaci[oó]n|instalaci[oó]n|contratado|reparador|trabajos/.test(txt)) return 3;
+  if (/perjudicado|contacto|aviso|llamada|informado|notificado/.test(txt)) return 2;
+  return 1;
+}
+
+function phaseHint(p) {
+  return {
+    1: '¿Has contactado ya con el perjudicado para informarle de que la aseguradora se pondrá en contacto con él?',
+    2: 'Recuerda que la comunidad debe reparar la instalación defectuosa. ¿Se han iniciado las gestiones con la empresa reparadora?',
+    3: 'Una vez finalizados los trabajos, deberás enviar la factura a la aseguradora. ¿Tienes ya la factura?',
+    4: 'Has enviado la documentación. Queda pendiente que el seguro envíe reparador o abone la indemnización. ¿Ha confirmado la aseguradora?',
+    5: 'El siniestro parece próximo a su resolución. ¿Quieres marcarlo como FINALIZADO?'
+  }[p] || '';
+}
+
+// ── Connection UI ─────────────────────────────────────
+function setConn(state) {
+  const dot = document.getElementById('conn-dot');
+  const lbl = document.getElementById('conn-label');
+  if (state === 'ok')  { dot.className='conn-dot ok';  lbl.textContent='Conectado · Google Sheets'; }
+  else if (state==='err') { dot.className='conn-dot err'; lbl.textContent='Sin conexión'; }
+  else                 { dot.className='conn-dot';      lbl.textContent='Conectando...'; }
+}
+
+function showSync(v) {
+  const bar = document.getElementById('sync-bar');
+  const icon = document.getElementById('sync-icon');
+  bar.style.display = v ? 'flex' : 'none';
+  icon.classList.toggle('spinning', v);
+}
+
+// ── Load from sheets ──────────────────────────────────
+async function loadFromSheets() {
+  showSync(true);
+  const rows = await sheetsRead();
+  if (rows) { claims = parseSheetData(rows); setConn('ok'); }
+  else setConn('err');
+  showSync(false);
+  updateDataPanel();
+}
+
+// ── Config ────────────────────────────────────────────
+async function saveScriptUrl() {
+  const url = document.getElementById('script-url-input').value.trim();
+  const status = document.getElementById('config-status');
+  if (!url.startsWith('https://script.google.com')) {
+    status.textContent = '✗ URL no válida. Debe empezar por https://script.google.com';
+    status.style.color = 'var(--danger-text)';
+    return;
+  }
+  scriptUrl = url;
+  ls.set(SCRIPT_URL_KEY, url);
+  status.textContent = 'Probando conexión...';
+  status.style.color = 'var(--text2)';
+  const ok = await sheetsPing();
+  if (ok) {
+    status.textContent = '✓ Conexión establecida correctamente.';
+    status.style.color = 'var(--success-text)';
+    setConn('ok');
+    await loadFromSheets();
+    switchTab('chat');
+  } else {
+    status.textContent = '✗ No se pudo conectar. Verifica que el acceso sea "Cualquier usuario" y que hayas creado una nueva versión al reimplementar.';
+    status.style.color = 'var(--danger-text)';
+    setConn('err');
+  }
+}
+
+async function saveApiKey() {
+  const input = document.getElementById('api-key-input');
+  const status = document.getElementById('api-key-status');
+  const key = input.value.trim();
+  if (!key.startsWith('sk-ant-')) {
+    status.textContent = '✗ Clave no válida. Debe empezar por sk-ant-';
+    status.style.color = 'var(--danger-text)';
+    return;
+  }
+  apiKey = key;
+  ls.set(API_KEY_KEY, key);
+  status.textContent = '✓ Clave guardada correctamente.';
+  status.style.color = 'var(--success-text)';
+  input.value = '·'.repeat(20);
+}
+function renderChat() {
+  const panel = document.getElementById('chat-panel');
+  panel.innerHTML = '';
+  conversationHistory.forEach(m => {
+    const wrap = document.createElement('div');
+    wrap.className = `msg ${m.role}`;
+    const av = document.createElement('div');
+    av.className = 'msg-avatar';
+    av.textContent = m.role === 'bot' ? 'D' : (userName ? userName[0].toUpperCase() : 'U');
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble';
+    bubble.innerHTML = m.html || (m.text||'').replace(/\n/g,'<br>');
+    wrap.appendChild(av); wrap.appendChild(bubble);
+    panel.appendChild(wrap);
+  });
+  panel.scrollTop = panel.scrollHeight;
+}
+
+function addMsg(role, text, html) {
+  conversationHistory.push({role, text: text||'', html: html||null});
+  renderChat();
+}
+
+function showTypingInd() {
+  const p = document.getElementById('chat-panel');
+  const d = document.createElement('div');
+  d.className = 'msg bot'; d.id = 'typing-ind';
+  d.innerHTML = `<div class="msg-avatar" style="background:var(--brand);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;">D</div><div class="msg-bubble"><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
+  p.appendChild(d); p.scrollTop = p.scrollHeight;
+}
+function hideTypingInd() { const t=document.getElementById('typing-ind'); if(t) t.remove(); }
+
+// ── AI call ───────────────────────────────────────────
+async function botRespond(userText) {
+  if (isTyping) return;
+  if (!apiKey) {
+    addMsg('bot', '⚙️ Para usar el asistente necesitas introducir la API Key de Anthropic en la pestaña <strong>Configuración</strong>.');
+    return;
+  }
+  isTyping = true;
+  document.getElementById('send-btn').disabled = true;
+  showTypingInd();
+
+  const claimsJson = JSON.stringify(claims.map(c => ({
+    id: c.id,
+    reference: c.reference,
+    insurer: c.insurer,
+    type: c.type,
+    openDate: c.entries[0]?.date,
+    address: c.entries[0]?.address,
+    department: c.entries[0]?.department,
+    damage: c.entries[0]?.damage,
+    lastStatus: c.entries[c.entries.length-1]?.status,
+    numEntries: c.entries.length,
+    lastAction: c.entries[c.entries.length-1]?.action,
+    victim: c.entries[0]?.victim
+  })));
+
+  const system = `Eres el asistente interno de gestión de siniestros de DOMUSVIA INMUEBLES BARCELONA, S.L.U. Guías al personal en el registro y seguimiento de siniestros de comunidades de propietarios.
+
+SINIESTROS EN BASE DE DATOS: ${claimsJson}
+SINIESTRO SELECCIONADO: ${currentClaim ? JSON.stringify(currentClaim) : 'ninguno'}
+USUARIO ACTIVO: ${userName || 'no identificado'}
+FECHA HOY: ${todayStr()}
+
+INSTRUCCIONES CRÍTICAS:
+- Responde siempre en castellano, tono profesional y cercano.
+- NUNCA uses markdown: nada de **negrita**, *cursiva*, ni # encabezados. Solo texto plano.
+- NUNCA repitas el menú inicial si el usuario ya ha elegido una opción. Continúa con el flujo elegido.
+- Si el usuario dice "A", "quiero registrar un nuevo siniestro" o similar, inicia DIRECTAMENTE el flujo de nuevo siniestro preguntando la fecha. No vuelvas a preguntar qué quiere hacer.
+- Nunca inventes datos. Si hay dudas, pregunta una sola cosa a la vez.
+- Sé conciso y directo. Una pregunta por mensaje.
+
+FLUJOS:
+1. NUEVO SINIESTRO: recoge en orden, una pregunta cada vez:
+   P1: fecha del incidente
+   P2: dirección de la comunidad
+   P3: departamento afectado
+   P4: daños causados
+   P5: ¿aporta imágenes? (S/N)
+   P6: aseguradora
+   P7: tipo (Agua / Incendio / Robo / Responsabilidad civil / Daños estéticos / Otros)
+   P8: referencia aseguradora (o "Pendiente")
+   P9: datos del perjudicado (nombre, teléfono, email) o "No disponible"
+   Al final muestra resumen y pide confirmación (SÍ/NO) antes de guardar.
+
+2. SINIESTRO EN TRAMITACIÓN: localiza por referencia/dirección/fecha, muestra opciones, recoge fecha gestión, descripción, estado (PENDIENTE/FINALIZADO). Resumen y confirmación antes de guardar.
+
+3. CONSULTAS: responde sobre los siniestros de la base de datos.
+
+CICLO DE VIDA: Alta → Contacto perjudicado → Reparación instalación comunitaria → Envío factura a aseguradora → Resolución. Tras cada acción registrada sugiere el siguiente paso.
+
+COMANDOS DE GUARDADO — solo cuando el usuario confirme con SÍ, añade al final de tu respuesta en línea nueva (sin markdown):
+Nuevo siniestro: SAVE_CLAIM:{"fecha":"DD/MM/AAAA","direccion":"...","departamento":"...","danos":"...","imagenes":"S o N","aseguradora":"...","tipo":"...","referencia":"...","perjudicado":"..."}
+Nueva gestión: SAVE_ACTION:{"claim_id":"...","fecha":"DD/MM/AAAA","accion":"...","estado":"PENDIENTE o FINALIZADO"}`;
+
+  // Build full conversation history for context
+  const messages = conversationHistory
+    .filter(m => m.text && m.text !== 'Menú inicial' && m.text.length > 0)
+    .map(m => ({ role: m.role === 'bot' ? 'assistant' : 'user', content: m.text }));
+
+  // Ensure alternating roles and starts with user
+  const validMessages = [];
+  let lastRole = null;
+  for (const m of messages) {
+    if (m.role !== lastRole) { validMessages.push(m); lastRole = m.role; }
+  }
+  // Must start with user
+  while (validMessages.length > 0 && validMessages[0].role !== 'user') validMessages.shift();
+  // Must end with user (current message already added to history)
+  if (validMessages.length === 0 || validMessages[validMessages.length-1].content !== userText) {
+    validMessages.push({ role: 'user', content: userText });
+  }
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system,
+        messages: validMessages.length > 0 ? validMessages : [{ role: 'user', content: userText }]
+      })
+    });
+    const data = await res.json();
+    let text = (data.content && data.content[0]) ? (data.content[0].text || '') : '';
+
+    // Handle SAVE_CLAIM
+    if (text.includes('SAVE_CLAIM:')) {
+      const parts = text.split('SAVE_CLAIM:');
+      text = parts[0].trim();
+      try {
+        const jsonStr = parts[1].trim().split('\n')[0];
+        const d = JSON.parse(jsonStr);
+        const id = 'SIN_' + Date.now();
+        const row = [
+          normalizeDate(d.fecha), d.direccion, d.departamento, d.danos,
+          d.imagenes, d.referencia || 'Pendiente', 'Alta del siniestro',
+          'PENDIENTE', 0, d.aseguradora, d.tipo, d.perjudicado || '', id,
+          userName || 'Sin identificar'
+        ];
+        showSync(true);
+        const ok = await sheetsAppend(row);
+        showSync(false);
+        if (ok) {
+          await loadFromSheets();
+          currentClaim = claims.find(c => c.id === id) || claims[claims.length - 1];
+          const hint = phaseHint(detectPhase(currentClaim));
+          text += '\n\n✅ Siniestro guardado en Google Sheets correctamente.';
+          hideTypingInd();
+          addMsg('bot', text, text.replace(/\n/g,'<br>') + (hint ? `<div class="hint-box">💡 Siguiente paso sugerido: ${hint}</div>` : ''));
+        } else {
+          text += '\n\n⚠️ No se pudo guardar en Google Sheets. Comprueba la conexión en la pestaña Configuración.';
+          hideTypingInd();
+          addMsg('bot', text);
+        }
+      } catch(e) { hideTypingInd(); addMsg('bot', text); }
+      isTyping = false;
+      document.getElementById('send-btn').disabled = false;
+      return;
+    }
+
+    // Handle SAVE_ACTION
+    if (text.includes('SAVE_ACTION:')) {
+      const parts = text.split('SAVE_ACTION:');
+      text = parts[0].trim();
+      try {
+        const jsonStr = parts[1].trim().split('\n')[0];
+        const d = JSON.parse(jsonStr);
+        const claim = claims.find(c => c.id === d.claim_id) || currentClaim;
+        if (claim) {
+          const first = claim.entries[0];
+          const days = daysSince(first.date);
+          const row = [
+            normalizeDate(d.fecha), first.address, first.department,
+            first.damage, first.images, claim.reference,
+            d.accion, d.estado || 'PENDIENTE', days,
+            claim.insurer, claim.type, first.victim || '', claim.id,
+            userName || 'Sin identificar'
+          ];
+          showSync(true);
+          const ok = await sheetsAppend(row);
+          showSync(false);
+          if (ok) {
+            await loadFromSheets();
+            currentClaim = claims.find(c => c.id === claim.id);
+            const hint = phaseHint(detectPhase(currentClaim));
+            text += '\n\n✅ Gestión guardada en Google Sheets.';
+            hideTypingInd();
+            addMsg('bot', text, text.replace(/\n/g,'<br>') + (hint ? `<div class="hint-box">💡 Siguiente paso sugerido: ${hint}</div>` : ''));
+          } else {
+            text += '\n\n⚠️ No se pudo guardar en Google Sheets.';
+            hideTypingInd();
+            addMsg('bot', text);
+          }
+        } else {
+          hideTypingInd(); addMsg('bot', text);
+        }
+      } catch(e) { hideTypingInd(); addMsg('bot', text); }
+      isTyping = false;
+      document.getElementById('send-btn').disabled = false;
+      return;
+    }
+
+    hideTypingInd();
+    if (text.trim()) addMsg('bot', text);
+
+  } catch(err) {
+    hideTypingInd();
+    addMsg('bot', 'Error de conexión con el asistente de IA. Comprueba tu conexión a internet e inténtalo de nuevo.');
+  }
+
+  isTyping = false;
+  document.getElementById('send-btn').disabled = false;
+}
+
+// ── Data panel ────────────────────────────────────────
+function updateDataPanel() {
+  const panel = document.getElementById('data-inner');
+  const total = claims.length;
+  const pending = claims.filter(c => c.entries && c.entries[c.entries.length-1]?.status === 'PENDIENTE').length;
+  const done = total - pending;
+
+  let html = `
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Total</div><div class="stat-num">${total}</div></div>
+      <div class="stat-card"><div class="stat-label">Pendientes</div><div class="stat-num" style="color:var(--warn-text)">${pending}</div></div>
+      <div class="stat-card"><div class="stat-label">Finalizados</div><div class="stat-num" style="color:var(--success-text)">${done}</div></div>
+    </div>
+    <div class="section-hdr">
+      <span class="section-title">Expedientes · ${total} registros</span>
+      <div class="btns-row">
+        <button class="btn-small" onclick="loadFromSheets()">↻ Actualizar</button>
+        <button class="btn-small" onclick="exportCSV()">↓ Exportar CSV</button>
+      </div>
+    </div>`;
+
+  if (!scriptUrl) {
+    html += `<div class="empty">Configura la conexión en la pestaña <strong>Configuración</strong> para ver los datos.</div>`;
+  } else if (claims.length === 0) {
+    html += `<div class="empty">No hay siniestros registrados todavía.<br>Usa el asistente para registrar el primero.</div>`;
+  } else {
+    [...claims].reverse().forEach(c => {
+      if (!c.entries || !c.entries.length) return;
+      const first = c.entries[0];
+      const last  = c.entries[c.entries.length - 1];
+      const days  = daysSince(first.date);
+      const isPend = last.status === 'PENDIENTE';
+      html += `
+        <div class="claim-card" onclick="selectClaim('${c.id}')">
+          <div class="claim-top">
+            <span class="claim-ref">${c.reference || 'Sin referencia'}</span>
+            <span class="badge ${isPend ? 'badge-pend' : 'badge-done'}">${last.status}</span>
+          </div>
+          <div class="claim-addr">${first.address || '—'}</div>
+          <div class="claim-meta">
+            <span>${c.insurer || '—'}</span>
+            <span>${c.type || '—'}</span>
+            <span>${first.department || '—'}</span>
+          </div>
+          <div class="claim-foot">${days} días · ${c.entries.length} gestión${c.entries.length > 1 ? 'es' : ''} · Alta: ${first.date}</div>
+        </div>`;
+    });
+  }
+  panel.innerHTML = html;
+}
+
+function selectClaim(id) {
+  currentClaim = claims.find(c => c.id === id);
+  switchTab('chat');
+  if (currentClaim) {
+    const addr = currentClaim.entries[0]?.address || currentClaim.reference;
+    addMsg('user', `Ver siniestro: ${addr}`);
+    botRespond(`El usuario quiere consultar el siniestro con ID ${id}, dirección "${addr}", referencia "${currentClaim.reference}". Muestra un resumen completo del estado actual (todas las gestiones) y pregunta qué necesita hacer.`);
+  }
+}
+
+function exportCSV() {
+  const headers = ['Fecha','Dirección CP','Departamento','Daños','Imágenes','Referencia','Gestión','Estado','Días transcurridos','Aseguradora','Tipo','Perjudicado','ID','Usuario'];
+  const rows = [headers.join(';')];
+  claims.forEach(c => {
+    if (!c.entries) return;
+    const openDate = c.entries[0]?.date || '';
+    c.entries.forEach(e => {
+      rows.push([
+        e.date, e.address, e.department, e.damage, e.images,
+        c.reference, e.action, e.status, daysSince(openDate),
+        c.insurer, c.type, e.victim || '', c.id, e.usuario || ''
+      ].map(v => `"${(String(v||'')).replace(/"/g,'""')}"`).join(';'));
+    });
+  });
+  const blob = new Blob(['\uFEFF' + rows.join('\n')], {type: 'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Siniestros_DOMUSVIA.csv';
+  a.click();
+}
+
+// ── UI helpers ────────────────────────────────────────
+function switchTab(name) {
+  ['chat','data','config'].forEach((n, i) => {
+    document.querySelectorAll('.tab')[i].classList.toggle('active', n === name);
+    document.getElementById(n + '-wrap').classList.toggle('active', n === name);
+  });
+  if (name === 'data') updateDataPanel();
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+
+function sendMessage() {
+  const input = document.getElementById('user-input');
+  const text = input.value.trim();
+  if (!text || isTyping) return;
+  addMsg('user', text);
+  input.value = ''; input.style.height = 'auto';
+  botRespond(text);
+}
+
+function quickOpt(opt) {
+  const map = {
+    A: 'Quiero registrar un nuevo siniestro',
+    B: 'Quiero añadir una gestión a un siniestro existente',
+    C: 'Quiero consultar información sobre un siniestro existente'
+  };
+  addMsg('user', map[opt]);
+  botRespond(map[opt]);
+}
+
+// ── Init ──────────────────────────────────────────────
+async function init() {
+  scriptUrl = ls.get(SCRIPT_URL_KEY);
+  userName  = ls.get(USERNAME_KEY);
+  apiKey    = ls.get(API_KEY_KEY);
+
+  if (scriptUrl) document.getElementById('script-url-input').value = scriptUrl;
+  if (userName)  document.getElementById('user-name-input').value  = userName;
+  if (apiKey)    { document.getElementById('api-key-input').value = '·'.repeat(20); document.getElementById('api-key-status').textContent = '✓ Clave guardada.'; document.getElementById('api-key-status').style.color = 'var(--success-text)'; }
+
+  if (scriptUrl) {
+    setConn('loading');
+    const ok = await sheetsPing();
+    if (ok) { setConn('ok'); await loadFromSheets(); }
+    else setConn('err');
+  } else {
+    setConn('err');
+  }
+
+  // Weekly alerts
+  let alertsHtml = '';
+  if (checkWeekly() && claims.length > 0) {
+    markWeekly();
+    const pendAccred = claims.filter(c => {
+      if (!c.entries) return false;
+      const isPend = c.entries.some(e => e.status === 'PENDIENTE');
+      if (!isPend) return false;
+      const txt = c.entries.map(e => (e.action||'').toLowerCase()).join(' ');
+      return /factura|reparaci[oó]n realizada|trabajos finalizados|empresa contratada/.test(txt)
+          && !/enviada a aseguradora|justificante enviado|notificado a aseguradora/.test(txt);
+    });
+    const stale = claims.filter(c => {
+      if (!c.entries || !c.entries.length) return false;
+      if (!c.entries.some(e => e.status === 'PENDIENTE')) return false;
+      return daysSince(c.entries[c.entries.length-1].date) > 30;
+    });
+    if (pendAccred.length) alertsHtml += `<div class="alert-box">⚠️ ${pendAccred.length} siniestro${pendAccred.length>1?'s':''} pendiente${pendAccred.length>1?'s':''} de acreditar la reparación ante la aseguradora.</div>`;
+    if (stale.length)      alertsHtml += `<div class="alert-box">⚠️ ${stale.length} siniestro${stale.length>1?'s':''} sin actividad en más de 30 días.</div>`;
+  }
+
+  const menuHtml = alertsHtml + `Buenos días${userName ? ', ' + userName : ''}. ¿Con qué quieres que te ayude hoy?<br><br>
+    <button class="opt-btn" onclick="quickOpt('A')">[A] Nuevo siniestro</button>
+    <button class="opt-btn" onclick="quickOpt('B')">[B] Añadir gestión</button>
+    <button class="opt-btn" onclick="quickOpt('C')">[C] Consultar siniestro</button>` +
+    (!scriptUrl ? `<div class="info-box" style="margin-top:9px;">⚙️ Configura la conexión a Google Sheets en la pestaña <strong>Configuración</strong> para activar el guardado compartido.</div>` : '');
+
+  conversationHistory.push({role: 'bot', text: 'Menú inicial', html: menuHtml});
+  renderChat();
+}
+
+init();
+</script>
+</body>
+</html>

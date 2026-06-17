@@ -758,7 +758,7 @@ Nueva gestión: SAVE_ACTION:{"claim_id":"...","fecha":"DD/MM/AAAA","accion":"...
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 1000,
         system,
         messages: validMessages.length > 0 ? validMessages : [{ role: 'user', content: userText }]
@@ -775,10 +775,11 @@ Nueva gestión: SAVE_ACTION:{"claim_id":"...","fecha":"DD/MM/AAAA","accion":"...
         const jsonStr = parts[1].trim().split('\n')[0];
         const d = JSON.parse(jsonStr);
         const id = 'SIN_' + Date.now();
+        const openDateStr = normalizeDate(d.fecha);
         const row = [
-          normalizeDate(d.fecha), d.direccion, d.departamento, d.danos,
+          openDateStr, d.direccion, d.departamento, d.danos,
           d.imagenes, d.referencia || 'Pendiente', 'Alta del siniestro',
-          'PENDIENTE', 0, d.aseguradora, d.tipo, d.perjudicado || '', id,
+          'PENDIENTE', daysSince(openDateStr), d.aseguradora, d.tipo, d.perjudicado || '', id,
           userName || 'Sin identificar'
         ];
         showSync(true);
